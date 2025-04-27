@@ -1,146 +1,99 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>🍹 Калькулятор коктейлей</title>
-  <style>
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-      margin: 0;
-      padding: 20px;
-      background: #f5f5f5;
-      color: #333;
-    }
-    .container {
-      max-width: 600px;
-      margin: 0 auto;
-      background: white;
-      padding: 20px;
-      border-radius: 12px;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-    }
-    img {
-      width: 100%;
-      border-radius: 12px;
-      margin-bottom: 20px;
-    }
-    input, select, button {
-      width: 100%;
-      padding: 10px;
-      margin: 8px 0;
-      border: 1px solid #ccc;
-      border-radius: 8px;
-      font-size: 16px;
-    }
-    button {
-      background-color: #34b7f1;
-      color: white;
-      font-weight: bold;
-      border: none;
-      cursor: pointer;
-      margin-top: 16px;
-    }
-    .result {
-      background: #e0f7fa;
-      padding: 15px;
-      border-radius: 8px;
-      margin-top: 20px;
-    }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Калькулятор коктейлей</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f2f2f2;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            margin: 0;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            text-align: center;
+            width: 100%;
+            max-width: 400px;
+        }
+        select, input, button {
+            width: 100%;
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+        }
+        button {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+    </style>
 </head>
 <body>
-  <div class="container">
-    <h1>🍹 ТЕСТ Калькулятор коктейлей</h1>
 
-    <input type="text" id="searchInput" placeholder="Поиск коктейля...">
-
+<div class="container">
+    <h1>🍸 Калькулятор коктейлей</h1>
     <select id="cocktailSelect">
-      <option value="">-- Выберите коктейль --</option>
+        <option>-- Выберите коктейль --</option>
     </select>
-
-    <input type="number" id="quantity" min="1" value="1" placeholder="Количество порций">
-
+    <input type="number" id="quantity" placeholder="Введите количество" value="1" min="1">
     <button onclick="calculate()">Рассчитать</button>
 
-    <div id="cocktailImage" style="margin-top: 20px;"></div>
-    <div id="result" class="result" style="display: none;"></div>
-  </div>
+    <div id="result" style="margin-top:20px;"></div>
+</div>
 
-  <script>
-    const API_URL = "https://app.nocodb.com/api/v1/db/data/v1/cocktails_xs_pack_csv";
-    const API_TOKEN = "jyNETGfqOagPeIyErcVr7TZDdzkgbxZ2dGSDjLzQ";
-    let cocktails = [];
-
-    async function loadCocktails() {
-      try {
-        const response = await fetch(API_URL, {
-          headers: {
-            'accept': 'application/json',
-            'xc-token': API_TOKEN
-          }
-        });
-
+<script>
+// Загружаем список коктейлей
+async function loadCocktails() {
+    try {
+        const response = await fetch('/api/cocktails');
         const data = await response.json();
-        cocktails = data.list.map(record => record);
-        updateCocktailSelect(cocktails);
-      } catch (error) {
-        console.error('Ошибка загрузки коктейлей:', error);
-      }
-    }
 
-    function updateCocktailSelect(filteredCocktails) {
-      const select = document.getElementById('cocktailSelect');
-      select.innerHTML = '<option value="">-- Выберите коктейль --</option>';
-      filteredCocktails.forEach(cocktail => {
-        const option = document.createElement('option');
-        option.value = cocktail.Name;
-        option.textContent = cocktail.Name;
-        select.appendChild(option);
-      });
-    }
+        const select = document.getElementById('cocktailSelect');
+        select.innerHTML = '<option>-- Выберите коктейль --</option>';
 
-    document.getElementById('searchInput').addEventListener('input', function() {
-      const query = this.value.toLowerCase();
-      const filtered = cocktails.filter(c => c.Name.toLowerCase().includes(query));
-      updateCocktailSelect(filtered);
-    });
-
-    function calculate() {
-      const select = document.getElementById('cocktailSelect');
-      const quantity = parseInt(document.getElementById('quantity').value) || 1;
-      const resultDiv = document.getElementById('result');
-      const cocktailImageDiv = document.getElementById('cocktailImage');
-      const selectedName = select.value;
-
-      const cocktail = cocktails.find(c => c.Name === selectedName);
-
-      if (!cocktail) {
-        resultDiv.style.display = 'none';
-        cocktailImageDiv.innerHTML = '';
-        return;
-      }
-
-      cocktailImageDiv.innerHTML = `<img src="${cocktail.Image}" alt="${cocktail.Name}">`;
-
-      const ingredientsList = (cocktail.Ingredients || '').split(',').map(item => {
-        return item.replace(/(\d+)\s*(мл|гр|шт|ч\.л\.)/gi, (match, amount, unit) => {
-          return `${amount * quantity} ${unit.toLowerCase()}`;
+        data.list.forEach(cocktail => {
+            const option = document.createElement('option');
+            option.value = cocktail.Name; // Обрати внимание: Name = название коктейля
+            option.textContent = cocktail.Name;
+            select.appendChild(option);
         });
-      });
 
-      resultDiv.innerHTML = `
-        <h3>${cocktail.Name}</h3>
-        <p><strong>Ингредиенты на ${quantity} порций:</strong></p>
-        <ul>${ingredientsList.map(i => `<li>${i.trim()}</li>`).join('')}</ul>
-        <p><strong>Метод:</strong> ${cocktail.Method || 'Не указан'}</p>
-        <p><strong>Подача:</strong> ${cocktail.Glass || 'Не указана'}</p>
-        <p><strong>Украшение:</strong> ${cocktail.Decoration || 'Не указано'}</p>
-      `;
-      resultDiv.style.display = 'block';
+    } catch (error) {
+        console.error('Ошибка при загрузке коктейлей:', error);
+        alert('Ошибка загрузки коктейлей');
     }
+}
 
-    window.onload = loadCocktails;
-  </script>
+// Функция расчета (заглушка для примера)
+function calculate() {
+    const cocktail = document.getElementById('cocktailSelect').value;
+    const quantity = document.getElementById('quantity').value;
+    
+    if (cocktail && quantity > 0) {
+        document.getElementById('result').innerHTML = `<strong>Вы выбрали:</strong> ${cocktail} в количестве ${quantity} шт.`;
+    } else {
+        document.getElementById('result').innerHTML = `<span style="color:red;">Пожалуйста, выберите коктейль и введите количество.</span>`;
+    }
+}
+
+// Автоматическая загрузка коктейлей при открытии страницы
+document.addEventListener('DOMContentLoaded', loadCocktails);
+</script>
+
 </body>
 </html>
