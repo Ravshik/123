@@ -63,14 +63,16 @@ async function loadCocktails() {
         const response = await fetch('/api/cocktails');
         const data = await response.json();
 
-        // если data.list существует, работаем с ним, иначе с data
-        const cocktails = data.list ? data.list : data;
+        // Здесь важно!
+        const records = data.list ? data.list : data.records ? data.records : [];
 
         const select = document.getElementById('cocktailSelect');
-        cocktails.forEach(record => {
+
+        records.forEach(record => {
+            const fields = record.fields || record; // Иногда поля внутри fields
             const option = document.createElement('option');
-            option.value = record.Name;
-            option.textContent = record.Name;
+            option.value = fields.Name;
+            option.textContent = fields.Name;
             select.appendChild(option);
         });
     } catch (error) {
