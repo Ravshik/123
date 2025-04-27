@@ -1,100 +1,377 @@
 <!DOCTYPE html>
-<html lang="ru">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Калькулятор коктейлей</title>
+    <meta name="color-scheme" content="light dark">
+    <title>Menu Search</title>
     <style>
         body {
-            font-family: Arial, sans-serif;
-            background-color: #f2f2f2;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            min-height: 100vh;
             margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            background-color: #f5f5f7;
+            color: #1d1d1f;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
         }
+
         .container {
-            background: white;
-            padding: 30px;
-            border-radius: 10px;
+            width: 100%;
+            max-width: 800px;
+            padding: 20px;
+            background-color: #ffffff;
+            border-radius: 12px;
             box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-            text-align: center;
-            width: 100%;
-            max-width: 400px;
         }
-        select, input, button {
-            width: 100%;
-            padding: 10px;
-            margin: 10px 0;
-            border-radius: 5px;
-            border: 1px solid #ccc;
+
+        .search-box {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
         }
+
+        #searchInput {
+            flex: 1;
+            padding: 12px;
+            font-size: 16px;
+            border: 1px solid #d1d1d6;
+            border-radius: 8px;
+            outline: none;
+            transition: border-color 0.3s ease;
+        }
+
+        #searchInput:focus {
+            border-color: #007AFF;
+        }
+
         button {
-            background-color: #007bff;
+            padding: 12px 20px;
+            background-color: #007AFF;
             color: white;
             border: none;
-            font-weight: bold;
+            border-radius: 8px;
             cursor: pointer;
+            font-size: 16px;
+            transition: background-color 0.3s ease;
         }
+
         button:hover {
-            background-color: #0056b3;
+            background-color: #0063cc;
+        }
+
+        .dish-details {
+            padding: 20px;
+            margin: 10px 0;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            background-color: #fafafa;
+        }
+
+        .detail-row {
+            margin-bottom: 10px;
+            padding: 8px;
+            border-bottom: 1px solid #eee;
+        }
+
+        .detail-label {
+            color: #7e7d83;
+            font-weight: 500;
+            display: block;
+            margin-bottom: 5px;
+        }
+
+        .error {
+            color: #ff3b30;
+            padding: 10px;
+            font-size: 16px;
+            text-align: center;
+        }
+
+        .loading {
+            display: none;
+            color: #666;
+            padding: 10px;
+            font-size: 16px;
+            text-align: center;
+        }
+        
+        .dish-image {
+            max-width: 100%;
+            height: auto;
+            border-radius: 8px;
+            margin-top: 10px;
+            cursor: zoom-in;
+            transition: transform 0.2s;
+        }
+
+        .dish-image:hover {
+            transform: scale(1.02);
+        }
+
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.9);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .modal-content {
+            position: relative;
+            max-width: 90%;
+            max-height: 90%;
+        }
+
+        .modal-close {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            color: white;
+            font-size: 40px;
+            cursor: pointer;
+            text-shadow: 0 0 5px rgba(0,0,0,0.5);
+            transition: transform 0.2s;
+        }
+
+        .modal-close:hover {
+            transform: scale(1.2);
+        }
+
+        .modal-image {
+            width: 100%;
+            height: auto;
+            border-radius: 8px;
+            box-shadow: 0 0 20px rgba(0,0,0,0.5);
+        }
+
+        .description-list {
+            margin: 8px 0 0 0;
+            padding-left: 20px;
+            list-style-type: disc;
+        }
+        
+        .description-list li {
+            margin-bottom: 5px;
+            line-height: 1.5;
+        }
+
+        .description-paragraph {
+            margin: 10px 0;
+            line-height: 1.6;
+        }
+
+        .description-paragraph strong {
+            font-weight: 600;
+            color: #1d1d1f;
+        }
+
+        @media (prefers-color-scheme: dark) {
+            body {
+                background-color: #1d1d1f;
+                color: #ffffff;
+            }
+            .container {
+                background-color: #2c2c2e;
+                box-shadow: 0 2px 10px rgba(255,255,255,0.1);
+            }
+            .dish-details {
+                background-color: #3a3a3c;
+                border-color: #454545;
+            }
+            .detail-label {
+                color: #a0a0a0;
+            }
+            #searchInput {
+                background-color: #2c2c2e;
+                border-color: #454545;
+                color: #ffffff;
+            }
+            .error {
+                color: #ff453a;
+            }
+            .description-paragraph strong {
+                color: #ffffff;
+            }
+            .modal-overlay {
+                background: rgba(0,0,0,0.95);
+            }
         }
     </style>
 </head>
 <body>
+    <div class="modal-overlay" id="modalOverlay">
+        <span class="modal-close">&times;</span>
+        <div class="modal-content">
+            <img class="modal-image" id="modalImage" src="" alt="Увеличенное фото">
+        </div>
+    </div>
 
-<div class="container">
-    <h1>🍸 Калькулятор коктейлей</h1>
-    <select id="cocktailSelect">
-        <option>-- Выберите коктейль --</option>
-    </select>
-    <input type="number" id="quantity" placeholder="Введите количество" value="1" min="1">
-    <button onclick="calculate()">Рассчитать</button>
+    <div class="container">
+        <div class="search-box">
+            <input type="text" 
+                   id="searchInput" 
+                   placeholder="Введите название блюда">
+            <button onclick="searchDish()">Поиск</button>
+            <div class="loading" id="loading">🔍</div>
+        </div>
+        <div id="results"></div>
+    </div>
 
-    <div id="result" style="margin-top:20px;"></div>
-</div>
+    <script>
+        const token = 'fZNe7X_JQJpRQr7kXS84XbLPS9cx78KNTXbegCoo';
+        const tableUrl = 'https://nocodb.puzzlebot.top/api/v2/tables/m978b1pakgzll1p/records';
 
-<script>
-// Загружаем список коктейлей
-async function loadCocktails() {
-    try {
-        const response = await fetch('/api/cocktails');
-        const data = await response.json();
+        async function searchDish() {
+            const searchQuery = document.getElementById('searchInput').value.trim();
+            const resultsContainer = document.getElementById('results');
+            const loadingIndicator = document.getElementById('loading');
 
-        // Здесь важно!
-        const records = data.list ? data.list : data.records ? data.records : [];
+            if (!searchQuery) {
+                showError('Пожалуйста, введите данные для поиска');
+                return;
+            }
 
-        const select = document.getElementById('cocktailSelect');
+            try {
+                loadingIndicator.style.display = 'block';
+                resultsContainer.innerHTML = '';
 
-        records.forEach(record => {
-            const fields = record.fields || record; // Иногда поля внутри fields
-            const option = document.createElement('option');
-            option.value = fields.Name;
-            option.textContent = fields.Name;
-            select.appendChild(option);
+                const params = new URLSearchParams({
+                    where: `(menu_category,like,${searchQuery})~or(specific_dish,like,${searchQuery})~or(dish_class,like,${searchQuery})~or(dish_type,like,${searchQuery})`,
+                    fields: 'menu_category,dish_class,specific_dish,dish_type,dish_photo,dish_description'
+                });
+
+                const response = await fetch(`${tableUrl}?${params}`, {
+                    headers: {
+                        'xc-token': token,
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                if (!response.ok) throw new Error(`Ошибка HTTP: ${response.status}`);
+                
+                const data = await response.json();
+
+                if (data.list.length === 0) {
+                    showError('Блюдо не найдено');
+                    return;
+                }
+
+                data.list.forEach(dish => {
+                    const div = document.createElement('div');
+                    div.className = 'dish-details';
+                    
+                    const description = dish.dish_description || '';
+                    const descriptionLines = description.split('\n').filter(line => line.trim() !== '');
+                    
+                    let blocks = [];
+                    let currentList = [];
+                    
+                    descriptionLines.forEach(line => {
+                        const trimmedLine = line.trim();
+                        if (trimmedLine.startsWith('- ')) {
+                            currentList.push(line.replace('- ', '').trim());
+                        } else {
+                            if (currentList.length > 0) {
+                                blocks.push({ type: 'list', items: [...currentList] });
+                                currentList = [];
+                            }
+                            blocks.push({ type: 'paragraph', text: line.trim() });
+                        }
+                    });
+
+                    if (currentList.length > 0) {
+                        blocks.push({ type: 'list', items: [...currentList] });
+                    }
+
+                    let descriptionHTML = '';
+                    blocks.forEach(block => {
+                        if (block.type === 'list') {
+                            const listItems = block.items.map(item => {
+                                const processedItem = item.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+                                return `<li>${processedItem}</li>`;
+                            }).join('');
+                            descriptionHTML += `<ul class="description-list">${listItems}</ul>`;
+                        } else {
+                            const processedText = block.text.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+                            descriptionHTML += `<div class="description-paragraph">${processedText}</div>`;
+                        }
+                    });
+
+                    if (descriptionHTML === '') descriptionHTML = 'Нет описания';
+
+                    div.innerHTML = `
+                        <div class="detail-row">
+                            <span class="detail-label">Мероприятие:</span> ${dish.menu_category || 'Не указана'}
+                        </div>
+                        <div class="detail-row">
+                            <span class="detail-label">Тип блюда:</span> ${dish.dish_class || 'Не указан'}
+                        </div>
+                        <div class="detail-row">
+                            <span class="detail-label">Основной ингредиент:</span> ${dish.dish_type || 'Не указан'}
+                        </div>
+                        <div class="detail-row">
+                            <span class="detail-label">Название:</span> ${dish.specific_dish || 'Не указано'}
+                        </div>
+                        <div class="detail-row">
+                            <span class="detail-label">Состав</span>
+                            ${descriptionHTML}
+                        </div>
+                        ${dish.dish_photo?.length > 0 ? `
+                            <div class="detail-row">
+                                <span class="detail-label">Фото блюда:</span><br>
+                                <img src="${dish.dish_photo[0].url}" 
+                                     alt="Фото блюда" 
+                                     class="dish-image"
+                                     data-zoom="${dish.dish_photo[0].url}">
+                            </div>
+                        ` : ''}
+                    `;
+                    resultsContainer.appendChild(div);
+                });
+
+            } catch (error) {
+                showError(`Ошибка: ${error.message}`);
+            } finally {
+                loadingIndicator.style.display = 'none';
+            }
+        }
+
+        function showError(message) {
+            const resultsContainer = document.getElementById('results');
+            resultsContainer.innerHTML = `<div class="error">${message}</div>`;
+        }
+
+        const modalOverlay = document.getElementById('modalOverlay');
+        const modalImage = document.getElementById('modalImage');
+        const modalClose = document.querySelector('.modal-close');
+
+        document.addEventListener('click', (e) => {
+            if (e.target.classList.contains('dish-image')) {
+                modalImage.src = e.target.dataset.zoom;
+                modalOverlay.style.display = 'flex';
+                document.body.style.overflow = 'hidden';
+            }
         });
-    } catch (error) {
-        console.error('Ошибка при загрузке коктейлей:', error);
-    }
-}
 
-// Функция расчета (заглушка для примера)
-function calculate() {
-    const cocktail = document.getElementById('cocktailSelect').value;
-    const quantity = document.getElementById('quantity').value;
-    
-    if (cocktail && quantity > 0) {
-        document.getElementById('result').innerHTML = `<strong>Вы выбрали:</strong> ${cocktail} в количестве ${quantity} шт.`;
-    } else {
-        document.getElementById('result').innerHTML = `<span style="color:red;">Пожалуйста, выберите коктейль и введите количество.</span>`;
-    }
-}
+        modalClose.addEventListener('click', () => {
+            modalOverlay.style.display = 'none';
+            document.body.style.overflow = 'auto';
+        });
 
-// Автоматическая загрузка коктейлей при открытии страницы
-document.addEventListener('DOMContentLoaded', loadCocktails);
-</script>
-
+        modalOverlay.addEventListener('click', (e) => {
+            if (e.target === modalOverlay) {
+                modalOverlay.style.display = 'none';
+                document.body.style.overflow = 'auto';
+            }
+        });
+    </script>
 </body>
 </html>
