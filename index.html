@@ -63,19 +63,18 @@ async function loadCocktails() {
         const response = await fetch('/api/cocktails');
         const data = await response.json();
 
-        const select = document.getElementById('cocktailSelect');
-        select.innerHTML = '<option>-- Выберите коктейль --</option>';
+        // если data.list существует, работаем с ним, иначе с data
+        const cocktails = data.list ? data.list : data;
 
-        data.list.forEach(cocktail => {
+        const select = document.getElementById('cocktailSelect');
+        cocktails.forEach(record => {
             const option = document.createElement('option');
-            option.value = cocktail.Name; // Обрати внимание: Name = название коктейля
-            option.textContent = cocktail.Name;
+            option.value = record.Name;
+            option.textContent = record.Name;
             select.appendChild(option);
         });
-
     } catch (error) {
         console.error('Ошибка при загрузке коктейлей:', error);
-        alert('Ошибка загрузки коктейлей');
     }
 }
 
